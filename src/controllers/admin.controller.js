@@ -13,32 +13,22 @@ class AdminController extends BaseController {
 
     async createAdmin(req, res, next) {
         try {
-            const { error } = validator.create(req.body);
-            if (error) {
-                throw new AppError('Error input validation', 422);
-            }
-
-            console.log('request body: ', req.body);
-            const { username, email, password, hashedPassword } = req.body;
-            const adminPass = password || hashedPassword;
-            if (!adminPass) {
-                throw new AppError("parol yo'q", 400);
-            }
+            const { username, email, password } = req.body;
             const existsUsername = await Admin.findOne({ username });
             if (existsUsername) {
                 throw new AppError('Username already exists', 409);
             }
             const existsEmail = await Admin.findOne({ email });
             if (existsEmail) {
-                throw new AppError('Email adress already exists', 409);
+                throw new AppError('Email address already exists', 409);
             }
-            const hashedPass = await crypto.encrypt(adminPass);
+            const hashedPassword = await crypto.encrypt(password);
             const admin = await Admin.create({
                 username,
                 email,
-                hashedPassword: hashedPass
+                hashedPassword
             });
-            return successRes(res, admin, 201)
+            return successRes(res, admin, 201);
         } catch (error) {
             next(error);
         }
@@ -46,27 +36,18 @@ class AdminController extends BaseController {
 
     async signIn(req, res, next) {
         try {
-            const { error } = validator.signin(req.body);
-            if (error) {
-                throw new AppError(error?.details[0]?.message ?? 'Error input validation', 422);
-            }
-
             const { username, password } = req.body;
             const admin = await Admin.findOne({ username });
             const isMatchPassword = await crypto.decrypt(password, admin?.hashedPassword ?? '');
             if (!isMatchPassword) {
                 throw new AppError('Username or password incorrect', 400);
             }
-
             const payload = {
-                id: admin._id,
-                role: admin.role,
-                isActive: admin.isActive
+                id: admin._id, role: admin.role, isActive: admin.isActive
             };
             const accessToken = token.generateAccessToken(payload);
             const refreshToken = token.generateRefreshToken(payload);
-            token.writeToCookies(res, 'refreshTokenAdmin', refreshToken, 30);
-
+            token.writeToCookie(res, 'refreshTokenAdmin', refreshToken, 30);
             return successRes(res, {
                 token: accessToken,
                 admin
@@ -76,11 +57,11 @@ class AdminController extends BaseController {
         }
     }
 
-    async generateNewToken(req, res) {
+    async generateNewToken(req, res, next) {
         try {
             const refreshToken = req.cookies?.refreshTokenAdmin;
             if (!refreshToken) {
-                throw new AppError('Refresh token not found', 401);
+                throw new AppError('Authorization error', 401);
             }
             const verifiedToken = token.verifyToken(refreshToken, config.TOKEN.REFRESH_KEY);
             if (!verifiedToken) {
@@ -90,20 +71,19 @@ class AdminController extends BaseController {
             if (!admin) {
                 throw new AppError('Forbidden user', 403);
             }
-            const payload = {
+            const paylod = {
                 id: admin._id, role: admin.role, isActive: admin.isActive
             }
-            const accessToken = token.generateAccessToken(payload);
+            const accessToken = token.generateAccessToken(paylod);
             return successRes(res, {
-                token: accessToken,
-                admin
+                token: accessToken
             });
         } catch (error) {
             next(error);
         }
     }
 
-    async signOut(req, res) {
+    async signOut(req, res, next) {
         try {
             const refreshToken = req.cookies?.refreshTokenAdmin;
             if (!refreshToken) {
@@ -122,6 +102,62 @@ class AdminController extends BaseController {
         } catch (error) {
             next(error);
         }
+    }
+
+    // damage 
+    async updateAdmin(req, res, next) {
+        try {
+            const id = req.params?.id;
+            const admin = await this.checkById(id);
+            const { username, email, password } = req.body;
+            if (username) {
+                const exists = await Admin.findOne({ username });
+                if (exists && exists.username !== username) {
+                    throw new AppError('Username already exists', 409);
+                }
+            }
+            if (email) {
+                const exists = await Admin.findOne({ email });
+                if (exists && exists.email !== email) {
+                    throw new AppError('Email address already exists', 409);
+                }
+            }
+            let hashedPassword = admin.hashedPassword;
+            if (password) {
+                if (req.user?.role != admin.role) {
+                    throw new AppError('Not access to change password for admin', 403);
+                }
+                hashedPassword = await crypto.encrypt(password);
+                delete req.body.password;
+            }
+            const updatedAdmin = await Admin.findByIdAndUpdate(id, {
+                ...req.body, hashedPassword
+            }, { new: true });
+            return successRes(res, updatedAdmin);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async updatePasswordForAdmin(req, res, next) {
+        try {
+            const id = req.params?.id;
+            const admin = await BaseController.checkById(Admin, id);
+            const { oldPassword, newPassword } = req.body;
+            const isMatchPassword = await crypto.decrypt(oldPassword, admin.hashedPassword);
+            if (!isMatchPassword) {
+                throw new AppError('Incorrect old password', 400);
+            }
+            const hashedPassword = await crypto.encrypt(newPassword);
+            const updatedAdmin = await Admin.findByIdAndUpdate(id, { hashedPassword }, { new: true });
+            return successRes(res, updatedAdmin);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async forgetPassword(req, res, next) {
+
     }
 }
 

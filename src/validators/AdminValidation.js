@@ -6,7 +6,7 @@ class AdminValidator {
     create() {
         return Joi.object({
             username: Joi.string().required(),
-            email: Joi.string().required(),
+            email: Joi.string().email().required(),
             password: Joi.string().pattern(AdminValidator.passwordRegex).required()
         });
     }
@@ -21,8 +21,15 @@ class AdminValidator {
     update() {
         return Joi.object({
             username: Joi.string().optional(),
-            email: Joi.string().optional(),
+            email: Joi.string().email().optional(),
             password: Joi.string().pattern(AdminValidator.passwordRegex).optional()
+        });
+    }
+
+    password() {
+        return Joi.object({
+            oldPassword: Joi.string().required(),
+            newPassword: Joi.string().pattern(AdminValidator.passwordRegex).required()
         });
     }
 }

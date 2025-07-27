@@ -28,13 +28,7 @@ export class BaseController {
     findById = async (req, res, next) => {
         try {
             const id = req.params?.id;
-            if (!isValidObjectId(id)) {
-                throw new AppError('Invalid ObjectId', 400);
-            }
-            const data = await this.model.findById(id);
-            if (!data) {
-                throw new AppError('Not found', 404);
-            }
+            const data = await this.checkById(id);
             return successRes(res, data);
         } catch (error) {
             next(error);
@@ -44,9 +38,7 @@ export class BaseController {
     update = async (req, res, next) => {
         try {
             const id = req.params?.id;
-            if (!isValidObjectId(id)) {
-                throw new AppError('Invalid ObjectId', 400);
-            }
+            await this.checkById(id);
             const data = await this.model.findByIdAndUpdate(id, req.body, { new: true });
             if (!data) {
                 throw new AppError('Not found', 404);
@@ -60,9 +52,7 @@ export class BaseController {
     delete = async (req, res, next) => {
         try {
             const id = req.params?.id;
-            if (!isValidObjectId(id)) {
-                throw new AppError('Invalid ObjectId', 400);
-            }
+            await this.checkById(id);
             const data = await this.model.findByIdAndDelete(id);
             if (!data) {
                 throw new AppError('Not found', 404);
@@ -71,5 +61,16 @@ export class BaseController {
         } catch (error) {
             next(error);
         }
+    }
+
+    static async checkById(schmea, id) {
+        if (!isValidObjectId(id)) {
+            throw new AppError('Invalid object id', 400);
+        }
+        const data = await schmea.findById(id);
+        if (!data) {
+            throw new AppError('Not found', 404);
+        }
+        return data;
     }
 }

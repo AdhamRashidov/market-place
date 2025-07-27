@@ -5,8 +5,8 @@ export async function connectDB() {
     try {
         await connect(config.MONGO_URI);
         console.log('Database connected');
-    } catch (err) {
-        console.log('Error on connecting database', err.message);
+    } catch (error) {
+        console.log('Error on connecting to database', error);
         process.exit(1);
     }
 }

@@ -2,7 +2,7 @@ import config from '../config/index.js';
 import { AppError } from '../error/AppError.js';
 import token from '../utils/Token.js';
 
-export const AuthGuard = async (req, _res, next) => {
+export const AuthGuard = async (req, res, next) => {
     try {
         const auth = req.headers?.authorization;
         if (!auth) {

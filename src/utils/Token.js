@@ -1,4 +1,4 @@
-import config from "../config/index.js";
+import config from '../config/index.js';
 import jwt from 'jsonwebtoken';
 
 class Token {
@@ -14,7 +14,7 @@ class Token {
         });
     }
 
-    writeToCookies(res, key, value, expireDay) {
+    writeToCookie(res, key, value, expireDay) {
         res.cookie(key, value, {
             httpOnly: true,
             secure: true,

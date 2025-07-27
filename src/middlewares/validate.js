@@ -1,7 +1,7 @@
-import { AppError } from '../error/AppError';
+import { AppError } from '../error/AppError.js';
 
 export const validate = (schemaValid) => {
-    return function (req, _res, next) {
+    return function (req, res, next) {
         try {
             const schema = schemaValid();
             const { error } = schema.validate(req.body);

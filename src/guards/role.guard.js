@@ -8,7 +8,7 @@ export const RolesGuard = (...roles) => {
                 (roles.includes('ID') && req.params?.id === req.user?.id)) {
                 return next();
             }
-            throw new AppError('Forbidden User', 403)
+            throw new AppError('Forbidden user', 403);
         } catch (error) {
             next(error);
         }
