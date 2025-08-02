@@ -22,7 +22,7 @@ const SallerSchema = new Schema({
 SallerSchema.virtual('products', {
     ref: 'product',
     localField: '_id',
-    foreignField: 'saller'
+    foreignField: 'sallerId'
 });
 
 const Saller = model('Saller', SallerSchema);

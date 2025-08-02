@@ -14,7 +14,7 @@ const CategorySchema = new Schema({
 CategorySchema.virtual('products', {
     ref: 'Product',
     localField: '_id',
-    foreignField: 'category'
+    foreignField: 'categoryId'
 });
 
 const Category = model('Category', CategorySchema);

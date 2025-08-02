@@ -8,7 +8,7 @@ import config from '../config/index.js';
 
 class SallerController extends BaseController {
     constructor() {
-        super(Saller);
+        super(Saller, ['products']);
     }
 
     async createSaller(req, res, next) {
@@ -20,7 +20,7 @@ class SallerController extends BaseController {
             }
             const existsEmail = await Saller.findOne({ email });
             if (existsEmail) {
-                throw new AppError('Email address is already exists', 409);
+                throw new AppError('Email address already exists', 409);
             }
             const hashedPassword = await crypto.encrypt(password);
             delete req.body.password;
@@ -88,11 +88,11 @@ class SallerController extends BaseController {
         try {
             const refreshToken = req.cookies?.refreshTokenSaller;
             if (!refreshToken) {
-                throw new AppError('Refresh token not found', 404);
+                throw new AppError('Refresh token not found', 401);
             }
             const verifiedToken = token.verifyToken(refreshToken, config.TOKEN.REFRESH_KEY);
             if (!verifiedToken) {
-                throw new AppError('Refresh token expire', 401);
+                throw new AppError('Refresh token expired', 401);
             }
             const saller = await Saller.findById(verifiedToken?.id);
             if (!saller) {
